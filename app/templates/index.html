@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>System Health Dashboard</title>
+  <meta http-equiv="refresh" content="5">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; }
+    h1 { margin-bottom: 1.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .card { background: #1e293b; border-radius: 8px; padding: 1.25rem; border: 1px solid #334155; }
+    .card-title { font-size: 0.875rem; color: #94a3b8; text-transform: uppercase; }
+    .metric { font-size: 2rem; font-weight: bold; margin-top: 0.5rem; }
+    .status-healthy { color: #4ade80; }
+    .status-degraded { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>System Health Dashboard</h1>
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">Overall Status</div>
+      <div class="metric status-{{ metrics.status }}">{{ metrics.status|upper }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">CPU Utilization</div>
+      <div class="metric">{{ metrics.cpu_usage_pct }}%</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Memory (RAM)</div>
+      <div class="metric">{{ metrics.memory_usage_pct }}%</div>
+      <small>{{ metrics.memory_used_gb }} / {{ metrics.memory_total_gb }} GB</small>
+    </div>
+    <div class="card">
+      <div class="card-title">Disk Space</div>
+      <div class="metric">{{ metrics.disk_usage_pct }}%</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Database</div>
+      <div class="metric" style="font-size: 1.25rem; margin-top: 1rem;">{{ metrics.database_status }}</div>
+    </div>
+  </div>
+</body>
+</html>
