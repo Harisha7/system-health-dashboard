@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import psutil
 import psycopg2
 from fastapi import FastAPI, Request
@@ -6,14 +7,16 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI(title="System Health Dashboard")
-templates = Jinja2Templates(directory="templates")
+
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 DB_HOST = os.getenv("DB_HOST", "db")
 DB_NAME = os.getenv("DB_NAME", "healthdb")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASS = os.getenv("DB_PASSWORD", "postgres123")
 
-def check_db_health():
+def check_db_health() -> str:
     try:
         conn = psycopg2.connect(
             host=DB_HOST,
@@ -24,18 +27,19 @@ def check_db_health():
         )
         conn.close()
         return "Connected (Healthy)"
-    except Exception as e:
-        return f"Disconnected ({e.__class__.__name__})"
+    except Exception as exc:
+        return f"Disconnected ({exc.__class__.__name__})"
 
 @app.get("/api/health")
 def health_metrics():
-    cpu = psutil.cpu_percent(interval=0.5)
+    cpu = psutil.cpu_percent(interval=None)
     memory = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
     db_status = check_db_health()
+    is_healthy = ("Connected" in db_status) and (cpu < 95.0)
 
     return {
-        "status": "healthy" if "Connected" in db_status and cpu < 90 else "degraded",
+        "status": "healthy" if is_healthy else "degraded",
         "cpu_usage_pct": cpu,
         "memory_usage_pct": memory.percent,
         "memory_used_gb": round(memory.used / (1024 ** 3), 2),
