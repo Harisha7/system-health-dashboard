@@ -26,7 +26,7 @@ jobs:
       - name: Run Automated Pytest Suite
         env:
           PYTHONPATH: ./app
-        run: pytest -v tests/
+        run: python -mpytest -v tests/
 
       - name: Validate Compose & Image Build
         run: |

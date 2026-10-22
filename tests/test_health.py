@@ -51,3 +51,28 @@ def test_health_api_degraded_when_database_down():
         payload = response.json()
         assert payload["status"] == "degraded"
         assert "Disconnected" in payload["database_status"]
+def test_health_api_degraded_when_cpu_overloaded():
+    """
+    Test Case 3: Validate that /api/health reports 'degraded' status
+    when CPU utilization hits or exceeds the 95% threshold,
+    even if the PostgreSQL database is perfectly healthy.
+    """
+    with patch("app.main.check_db_health", return_value="Connected (Healthy)"), \
+         patch("psutil.cpu_percent", return_value=96.5), \
+         patch("psutil.virtual_memory") as mock_mem, \
+         patch("psutil.disk_usage") as mock_disk:
+
+        mock_mem.return_value.percent = 45.0
+        mock_mem.return_value.used = 4 * (1024 ** 3)
+        mock_mem.return_value.total = 16 * (1024 ** 3)
+        mock_disk.return_value.percent = 25.0
+
+        response = client.get("/api/health")
+
+        assert response.status_code == 200
+        payload = response.json()
+
+        # System must flag degraded because CPU >= 95%
+        assert payload["status"] == "degraded"
+        assert payload["cpu_usage_pct"] == 96.5
+        assert payload["database_status"] == "Connected (Healthy)"        
