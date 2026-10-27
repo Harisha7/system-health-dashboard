@@ -75,4 +75,28 @@ def test_health_api_degraded_when_cpu_overloaded():
         # System must flag degraded because CPU >= 95%
         assert payload["status"] == "degraded"
         assert payload["cpu_usage_pct"] == 96.5
-        assert payload["database_status"] == "Connected (Healthy)"        
+        assert payload["database_status"] == "Connected (Healthy)" 
+def test_dashboard_html_view_renders_correctly():
+    """
+    Test Case 4: Validate that GET / returns HTTP 200 with HTML content
+    and properly injects the health status into the DOM.
+    """
+    with patch("app.main.check_db_health", return_value="Connected (Healthy)"), \
+         patch("psutil.cpu_percent", return_value=22.0), \
+         patch("psutil.virtual_memory") as mock_mem, \
+         patch("psutil.disk_usage") as mock_disk:
+
+        mock_mem.return_value.percent = 35.0
+        mock_mem.return_value.used = 4 * (1024 ** 3)
+        mock_mem.return_value.total = 16 * (1024 ** 3)
+        mock_disk.return_value.percent = 20.0
+
+        response = client.get("/")
+
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        
+        # Verify rendered HTML elements
+        assert "<title>System Health Dashboard</title>" in response.text
+        assert "CPU Utilization" in response.text
+        assert "HEALTHY" in response.text              
